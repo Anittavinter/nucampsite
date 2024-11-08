@@ -1,50 +1,51 @@
+import 'dotenv/config';
+
 document.addEventListener('DOMContentLoaded', function () {
-    // Get the reservation form
-    const reserveForm = document.getElementById('reserveForm');
+    // Carousel Play/Pause button
+    const carousel = document.querySelector('#homeCarousel');
+    const carouselButton = document.querySelector('#carouselButton');
+    const icon = carouselButton.querySelector('i');
 
-    // Add event listener to the form
-    reserveForm.addEventListener('submit', function (event) {
-        event.preventDefault(); // Prevent default form submission
-
-        // Gather form data
-        const numCampers = reserveForm.numCampers.value;
-        const date = reserveForm.date.value;
-
-        // Perform validation (example: check if fields are empty)
-        if (numCampers === 'Select...' || !date) {
-            alert('Please fill in all fields.');
-            return;
+    carouselButton.addEventListener('click', function () {
+        if (icon.classList.contains('fa-pause')) {
+            $(carousel).carousel('pause');
+            icon.classList.replace('fa-pause', 'fa-play');
+        } else {
+            $(carousel).carousel('cycle');
+            icon.classList.replace('fa-play', 'fa-pause');
         }
-
-        // Simulate a successful form submission (you can replace this with actual form submission logic)
-        alert(`Reservation confirmed for ${numCampers} camper(s) on ${date}!`);
-
-        // Optionally, you can reset the form after submission
-        reserveForm.reset();
     });
 
-    // Initialize the carousel
-    const carousel = new bootstrap.Carousel('#homeCarousel', {
-        interval: 5000,
-        pause: false
-    });
-
-    // Get the carousel control button and icon
-    const carouselButton = document.getElementById('carouselButton');
-    const faIcon = document.getElementById('faButton');
-
-    // Add event listener to the carousel button
-    if (carouselButton) {
-        carouselButton.addEventListener('click', function () {
-            if (faIcon.classList.contains('fa-pause')) {
-                faIcon.classList.remove('fa-pause');
-                faIcon.classList.add('fa-play');
-                carousel.pause();
-            } else {
-                faIcon.classList.remove('fa-play');
-                faIcon.classList.add('fa-pause');
-                carousel.cycle();
-            }
-        });
-    }
+    // Fetch and display weather
+    fetchWeather();
 });
+
+async function fetchWeather() {
+    const apiKey = process.env.OPEN_WEATHER_API_KEY;
+    const city = 'Nairobi';
+    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=metric`;
+
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Error: ${response.statusText}`);
+        const weatherData = await response.json();
+        displayWeather(weatherData);
+    } catch (error) {
+        console.error('Failed to fetch weather data:', error);
+    }
+}
+
+function displayWeather(weatherData) {
+    const temperature = weatherData.main.temp;
+    const description = weatherData.weather[0].description;
+    const iconCode = weatherData.weather[0].icon;
+
+    const weatherElement = document.getElementById('weather');
+    if (weatherElement) {
+        weatherElement.innerHTML = `
+            <img src="https://openweathermap.org/img/w/${iconCode}.png" alt="${description}" />
+            <p>Temperature: ${temperature}°C</p>
+            <p>Condition: ${description}</p>
+        `;
+    }
+}
